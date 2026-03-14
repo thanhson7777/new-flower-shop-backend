@@ -32,7 +32,7 @@ const createNew = async (reqBody) => {
     const createdUser = await userModel.createNew(newUser)
     const getNewUser = await userModel.findOneById(createdUser.insertedId)
 
-    const verificationLink = `${WEBSITE_DOMAIN}/account/verification?email=${getNewUser.email}&token=${getNewUser.verifyToken}`
+    const verificationLink = `${WEBSITE_DOMAIN}/verify?email=${getNewUser.email}&token=${getNewUser.verifyToken}`
     const customSubject = 'FlowerShop: Xác thực tài khoản của bạn'
 
     const userName = createdUser.displayName || 'bạn'
@@ -223,6 +223,18 @@ const updateUserStatus = async (userId, updateData) => {
   } catch (error) { throw error }
 }
 
+const getUserById = async (userId) => {
+  try {
+    const user = await userModel.findOneById(userId)
+    if (!user) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Người dùng không tồn tại!')
+    }
+    // Remove password from response
+    const { password, ...userWithoutPassword } = user
+    return userWithoutPassword
+  } catch (error) { throw error }
+}
+
 const changePassword = async (userId, reqBody) => {
   try {
     const { currentPassword, newPassword } = reqBody
@@ -249,6 +261,103 @@ const changePassword = async (userId, reqBody) => {
   } catch (error) { throw error }
 }
 
+const generateResetToken = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString()
+}
+
+const forgotPassword = async (reqBody) => {
+  try {
+    const { email } = reqBody
+
+    const existUser = await userModel.findOneByEmail(email)
+
+    if (existUser) {
+      const resetToken = generateResetToken()
+      const resetExpires = Date.now() + 15 * 60 * 1000
+
+      await userModel.updatePasswordResetToken(email, resetToken, resetExpires)
+
+      const customSubject = 'FlowerShop: Khôi phục mật khẩu'
+
+      const resetLink = `${WEBSITE_DOMAIN}/reset-password?email=${encodeURIComponent(email)}&token=${resetToken}`
+
+      const htmlContent = `
+        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.8; color: #333333; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; overflow: hidden; background-color: #ffffff;">
+          <div style="background-color: #3b82f6; padding: 35px 20px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-family: 'Georgia', serif; letter-spacing: 3px; text-transform: uppercase;">
+              Tiệm Hoa Tươi
+            </h1>
+          </div>
+          <div style="padding: 50px 30px; background-color: #ffffff; text-align: center;">
+            <h2 style="color: #3b82f6; margin-top: 0; font-family: 'Georgia', serif; font-weight: normal; font-size: 22px; letter-spacing: 1px;">
+              Khôi phục mật khẩu
+            </h2>
+            <p style="font-size: 15px; color: #555555; margin-bottom: 25px;">Xin chào <strong>${existUser.displayName || 'bạn'}</strong>,</p>
+            <p style="font-size: 15px; color: #555555;">
+              Chúng tôi đã nhận được yêu cầu khôi phục mật khẩu của bạn. Nhấp vào nút bên dưới để đặt lại mật khẩu:
+            </p>
+            <div style="margin: 40px 0;">
+              <a href="${resetLink}" target="_blank" style="background-color: #3b82f6; color: #ffffff; padding: 14px 36px; text-decoration: none; border: 1px solid #3b82f6; font-weight: 500; font-size: 13px; text-transform: uppercase; letter-spacing: 2px; display: inline-block; border-radius: 4px;">
+                Đặt Lại Mật Khẩu
+              </a>
+            </div>
+            <p style="font-size: 13px; color: #888888; font-style: italic;">Liên kết này sẽ hết hạn sau 15 phút.</p>
+            <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #f0f0f0;">
+              <p style="font-size: 13px; color: #888888; margin-bottom: 5px;">Nếu nút bấm không hoạt động, vui lòng truy cập đường dẫn sau:</p>
+              <p style="font-size: 12px; color: #3b82f6; word-break: break-all;">${resetLink}</p>
+            </div>
+            <div style="margin-top: 30px; padding: 20px; background-color: #fafafa; border-radius: 8px;">
+              <p style="font-size: 13px; color: #666666; margin: 0;">
+                Nếu bạn không yêu cầu khôi phục mật khẩu, vui lòng bỏ qua email này.
+              </p>
+            </div>
+          </div>
+          <div style="background-color: #fafafa; padding: 30px 20px; text-align: center; font-size: 11px; color: #999999; letter-spacing: 0.5px;">
+            <p style="margin: 5px 0;">&copy; 2026 Tiệm Hoa Tươi.</p>
+          </div>
+        </div>
+      `
+
+      await BrevoProvider.sendEmail(email, customSubject, htmlContent)
+    }
+
+    return {
+      success: true,
+      message: 'Nếu email tồn tại trong hệ thống, chúng tôi đã gửi mã xác nhận đến email của bạn.'
+    }
+  } catch (error) { throw error }
+}
+
+const resetPassword = async (reqBody) => {
+  try {
+    const { email, resetToken, newPassword } = reqBody
+
+    const existUser = await userModel.findOneByEmail(email)
+    if (!existUser) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Email không tồn tại!')
+    }
+
+    if (existUser.passwordResetAttempts >= 5) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'Bạn đã thử quá nhiều lần. Vui lòng thử lại sau!')
+    }
+
+    const userWithToken = await userModel.findUserByResetToken(email, resetToken)
+
+    if (!userWithToken) {
+      await userModel.incrementResetAttempts(email)
+      const attemptsLeft = 5 - existUser.passwordResetAttempts - 1
+      throw new ApiError(StatusCodes.BAD_REQUEST, `Mã xác nhận không hợp lệ hoặc đã hết hạn! Còn ${attemptsLeft} lần thử.`)
+    }
+
+    await userModel.resetPassword(email, newPassword)
+
+    return {
+      success: true,
+      message: 'Mật khẩu đã được đặt lại thành công!'
+    }
+  } catch (error) { throw error }
+}
+
 export const userService = {
   createNew,
   verifyAccount,
@@ -256,6 +365,9 @@ export const userService = {
   verifyToken,
   update,
   getAdminUsers,
+  getUserById,
   updateUserStatus,
-  changePassword
+  changePassword,
+  forgotPassword,
+  resetPassword
 }

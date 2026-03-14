@@ -131,6 +131,21 @@ const updateUserStatus = async (req, res, next) => {
   }
 }
 
+const getUserById = async (req, res, next) => {
+  try {
+    const userId = req.params.id
+    const result = await userService.getUserById(userId)
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: 'Lấy thông tin người dùng thành công',
+      data: result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 const changePassword = async (req, res, next) => {
   try {
     const userId = req.jwtDecoded._id
@@ -146,6 +161,26 @@ const changePassword = async (req, res, next) => {
   }
 }
 
+const forgotPassword = async (req, res, next) => {
+  try {
+    const result = await userService.forgotPassword(req.body)
+
+    res.status(StatusCodes.OK).json(result)
+  } catch (error) {
+    next(error)
+  }
+}
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const result = await userService.resetPassword(req.body)
+
+    res.status(StatusCodes.OK).json(result)
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const userController = {
   createNew,
   verifyAccount,
@@ -154,6 +189,9 @@ export const userController = {
   refreshToken,
   update,
   getUsers,
+  getUserById,
   updateUserStatus,
-  changePassword
+  changePassword,
+  forgotPassword,
+  resetPassword
 }

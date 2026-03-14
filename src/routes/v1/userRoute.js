@@ -45,6 +45,13 @@ Router.route('/')
     userController.getUsers
   )
 
+Router.route('/:id')
+  .get(
+    authMiddleware.isAuthorized,
+    authMiddleware.isAuthorizedAdmin,
+    userController.getUserById
+  )
+
 Router.route('/:id/status')
   .patch(
     authMiddleware.isAuthorized,
@@ -58,6 +65,18 @@ Router.route('/change-password')
   .put(
     authMiddleware.isAuthorized,
     userController.changePassword
+  )
+
+Router.route('/forgot-password')
+  .post(
+    userValidation.forgotPassword,
+    userController.forgotPassword
+  )
+
+Router.route('/reset-password')
+  .post(
+    userValidation.resetPassword,
+    userController.resetPassword
   )
 
 export const userRoute = Router
