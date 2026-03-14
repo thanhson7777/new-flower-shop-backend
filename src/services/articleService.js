@@ -16,7 +16,7 @@ const createNew = async (reqBody, reqFile) => {
         reqFile.buffer,
         'image-article-flower-shop'
       )
-      newData.image = uploadResult.secure_url
+      newData.thumbnail_url = uploadResult.secure_url
     }
 
     const createdArticle = await articleModel.createNew(newData)
@@ -43,7 +43,7 @@ const update = async (articleId, reqBody, reqFile) => {
         reqFile.buffer,
         'image-article-flower-shop'
       )
-      newData.image = uploadResult.secure_url
+      newData.thumbnail_url = uploadResult.secure_url
     }
     if (reqBody.name) {
       newData.slug = slugify(reqBody.name)

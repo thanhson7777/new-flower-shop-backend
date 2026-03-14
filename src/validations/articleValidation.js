@@ -11,15 +11,32 @@ const createNew = async (req, res, next) => {
       'string.max': 'Tên phải ít hơn 100 ký tự',
       'string.trim': 'Tên không được để khoảng trắng ở đầu và cuối'
     }),
-    summary: Joi.string().trim().max(300).required(),
-    content: Joi.string().trim().required(),
+    slug: Joi.string().trim().optional(),
+    summary: Joi.string().trim().max(300).required().messages({
+      'any.required': 'Tóm tắt là bắt buộc',
+      'string.empty': 'Tóm tắt không được để trống',
+      'string.max': 'Tóm tắt phải ít hơn 300 ký tự'
+    }),
+    content: Joi.string().trim().required().messages({
+      'any.required': 'Nội dung là bắt buộc',
+      'string.empty': 'Nội dung không được để trống'
+    }),
     status: Joi.string().valid('draft', 'published', 'hidden').default('draft')
   })
 
   try {
+    // console.log('=== Validating Article Data ===')
+    // console.log('req.body:', JSON.stringify(req.body))
+    // console.log('req.file:', req.file)
     await correctCondition.validateAsync(req.body, { abortEarly: false, allowUnknown: true })
+    // console.log('Validation passed!')
     next()
   } catch (error) {
+    console.log('=== Validation Error ===')
+    console.log('Error message:', error.message)
+    if (error.details) {
+      console.log('Error details:', JSON.stringify(error.details, null, 2))
+    }
     next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, error.message))
   }
 }
