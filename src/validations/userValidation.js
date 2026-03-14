@@ -102,11 +102,44 @@ const checkProductId = async (req, res, next) => {
   }
 }
 
+const forgotPassword = async (req, res, next) => {
+  const correctCondition = Joi.object({
+    email: Joi.string().required().pattern(EMAIL_RULE).message(EMAIL_RULE_MESSAGE)
+  })
+
+  try {
+    await correctCondition.validateAsync(req.body, { abortEarly: false, stripUnknown: true })
+    next()
+  } catch (error) {
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
+  }
+}
+
+const resetPassword = async (req, res, next) => {
+  const correctCondition = Joi.object({
+    email: Joi.string().required().pattern(EMAIL_RULE).message(EMAIL_RULE_MESSAGE),
+    resetToken: Joi.string().required().min(6).max(6).messages({
+      'string.min': 'Mã xác nhận phải gồm 6 ký tự',
+      'string.max': 'Mã xác nhận phải gồm 6 ký tự'
+    }),
+    newPassword: Joi.string().required().pattern(PASSWORD_RULE).message(`newPassword: ${PASSWORD_RULE_MESSAGE}`)
+  })
+
+  try {
+    await correctCondition.validateAsync(req.body, { abortEarly: false, stripUnknown: true })
+    next()
+  } catch (error) {
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
+  }
+}
+
 export const userValidation = {
   createNew,
   verifyAccount,
   login,
   update,
   updateUserStatus,
-  checkProductId
+  checkProductId,
+  forgotPassword,
+  resetPassword
 }

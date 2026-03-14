@@ -20,6 +20,12 @@ const USER_COLLECTION_SCHEMA = Joi.object({
 
   address: Joi.string().optional().allow(null, ''),
 
+  // Reset password fields
+  passwordResetToken: Joi.string().optional().allow(null, ''),
+  passwordResetExpires: Joi.date().timestamp('javascript').optional().allow(null),
+  passwordResetAttempts: Joi.number().integer().min(0).default(0),
+  passwordChangedAt: Joi.date().timestamp('javascript').optional().allow(null),
+
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp('javascript').default(null),
   _destroy: Joi.boolean().default(false)
@@ -132,6 +138,88 @@ const countTotalUsers = async () => {
   } catch (error) { throw error }
 }
 
+const updatePasswordResetToken = async (email, token, expires) => {
+  try {
+    const result = await GET_DB().collection(USER_COLLECTION_NAME).findOneAndUpdate(
+      { email: email },
+      {
+        $set: {
+          passwordResetToken: token,
+          passwordResetExpires: expires,
+          passwordResetAttempts: 0
+        }
+      },
+      { returnDocument: 'after', projection: { password: 0 } }
+    )
+    return result
+  } catch (error) {
+    throw error
+  }
+}
+
+const findUserByResetToken = async (email, token) => {
+  try {
+    const result = await GET_DB().collection(USER_COLLECTION_NAME).findOne({
+      email: email,
+      passwordResetToken: token,
+      passwordResetExpires: { $gt: Date.now() }
+    })
+    return result
+  } catch (error) {
+    throw error
+  }
+}
+
+const resetPassword = async (email, newPassword) => {
+  try {
+    const bcrypt = require('bcryptjs')
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+    const result = await GET_DB().collection(USER_COLLECTION_NAME).findOneAndUpdate(
+      { email: email },
+      {
+        $set: {
+          password: hashedPassword,
+          passwordResetToken: null,
+          passwordResetExpires: null,
+          passwordChangedAt: Date.now()
+        }
+      },
+      { returnDocument: 'after', projection: { password: 0 } }
+    )
+    return result
+  } catch (error) {
+    throw error
+  }
+}
+
+const incrementResetAttempts = async (email) => {
+  try {
+    await GET_DB().collection(USER_COLLECTION_NAME).updateOne(
+      { email: email },
+      { $inc: { passwordResetAttempts: 1 } }
+    )
+  } catch (error) {
+    throw error
+  }
+}
+
+const clearResetToken = async (email) => {
+  try {
+    await GET_DB().collection(USER_COLLECTION_NAME).updateOne(
+      { email: email },
+      {
+        $set: {
+          passwordResetToken: null,
+          passwordResetExpires: null
+        }
+      }
+    )
+  } catch (error) {
+    throw error
+  }
+}
+
 export const userModel = {
   USER_COLLECTION_NAME,
   USER_COLLECTION_SCHEMA,
@@ -142,6 +230,11 @@ export const userModel = {
   countUsersByRole,
   getUsers,
   updateUserStatus,
-  countTotalUsers
+  countTotalUsers,
+  updatePasswordResetToken,
+  findUserByResetToken,
+  resetPassword,
+  incrementResetAttempts,
+  clearResetToken
 }
 
