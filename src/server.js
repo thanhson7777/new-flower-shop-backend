@@ -20,6 +20,7 @@ const START_SERVER = () => {
   app.use(cors(corsOptions))
 
   app.use(express.json())
+  app.use(express.urlencoded({ extended: true }))
 
   app.use('/v1', APIS_V1)
 

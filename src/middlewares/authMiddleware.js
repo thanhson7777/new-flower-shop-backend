@@ -6,6 +6,10 @@ import { USER_ROLE } from '~/utils/constants'
 
 const isAuthorized = async (req, res, next) => {
   const clientAccessToken = req.cookies?.clientAccessToken || req.headers.authorization?.split(' ')[1]
+  // console.log('=== Auth Middleware Debug ===')
+  // console.log('Token exists:', !!clientAccessToken)
+  // console.log('Token value:', clientAccessToken ? clientAccessToken.substring(0, 20) + '...' : 'none')
+  // console.log('==============================')
   if (!clientAccessToken) {
     next(new ApiError(StatusCodes.UNAUTHORIZED, 'Không tồn tại token này!'))
     return
@@ -14,6 +18,7 @@ const isAuthorized = async (req, res, next) => {
   try {
     const accessTokenDecoded = await jwtProvider.verifyToken(clientAccessToken, env.ACCESS_TOKEN_SECRET_SIGNATURE)
     req.jwtDecoded = accessTokenDecoded
+    // console.log('Auth passed, user:', accessTokenDecoded)
     next()
   } catch (error) {
     // Nếu access tokenn hết hạn thì trả về lỗi 410

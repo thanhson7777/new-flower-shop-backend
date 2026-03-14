@@ -3,7 +3,7 @@ import { articleValidation } from '~/validations/articleValidation'
 import { articleController } from '~/controllers/articleController'
 import { authMiddleware } from '~/middlewares/authMiddleware'
 import { multerUploadMiddleware } from '~/middlewares/multerUploadMiddleware'
-import { productFormDataMiddleware } from '~/middlewares/productFormDataMiddleware'
+import { articleFormDataMiddleware } from '~/middlewares/articleFormDataMiddleware'
 
 const Router = express.Router()
 Router.route('/')
@@ -12,7 +12,7 @@ Router.route('/')
     authMiddleware.isAuthorized,
     authMiddleware.isAuthorizedAdmin,
     multerUploadMiddleware.uploadMulter.single('image'),
-    productFormDataMiddleware.transformFormData,
+    articleFormDataMiddleware.transformFormData,
     articleValidation.createNew,
     articleController.createNew
   )
@@ -23,7 +23,7 @@ Router.route('/:id')
     authMiddleware.isAuthorized,
     authMiddleware.isAuthorizedAdmin,
     multerUploadMiddleware.uploadMulter.single('image'),
-    productFormDataMiddleware.transformFormData,
+    articleFormDataMiddleware.transformFormData,
     articleValidation.update,
     articleController.update
   )

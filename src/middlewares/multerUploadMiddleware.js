@@ -13,8 +13,9 @@ const customFileFilter = (req, file, callback) => {
   return callback(null, true)
 }
 
-// upload file
+// upload file - dùng memory storage để có buffer
 const uploadMulter = multer({
+  storage: multer.memoryStorage(),
   limit: { fileSize: LIMIT_COMMON_FILE_SIZE },
   fileFilter: customFileFilter
 })
