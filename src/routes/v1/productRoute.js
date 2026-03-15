@@ -44,6 +44,9 @@ Router.route('/admin/:id/force')
     productController.forceDeleteItem
   )
 
+Router.route('/related/:id')
+  .get(productController.getRelatedProducts)
+
 Router.route('/:id')
   .get(
     productValidation.checkProductId,

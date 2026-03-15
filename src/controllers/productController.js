@@ -1,5 +1,6 @@
 import { StatusCodes } from 'http-status-codes'
 import { productService } from '~/services/productService'
+import ApiError from '~/utils/ApiError'
 
 const createNew = async (req, res, next) => {
   try {
@@ -14,9 +15,15 @@ const createNew = async (req, res, next) => {
 
 const getProducts = async (req, res, next) => {
   try {
-    const { page, itemsPerPage } = req.query
+    const { page, itemsPerPage, search, category, sort } = req.query
 
-    const result = await productService.getProducts(page, itemsPerPage)
+    const result = await productService.getProducts(
+      page,
+      itemsPerPage,
+      search || null,
+      category || null,
+      sort || null
+    )
     res.status(StatusCodes.OK).json({
       success: true,
       message: 'Lấy danh sách sản phẩm thành công!',
@@ -110,11 +117,30 @@ const forceDeleteItem = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getRelatedProducts = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { categoryId, limit = 4 } = req.query
+
+    if (!categoryId) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Thiếu categoryId')
+    }
+
+    const products = await productService.getRelatedProducts(id, categoryId, parseInt(limit, 10))
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: 'Lấy sản phẩm liên quan thành công!',
+      data: products
+    })
+  } catch (error) { next(error) }
+}
+
 export const productController = {
   createNew,
   getProducts,
   getAccessories,
   getDetails,
+  getRelatedProducts,
   update,
   deleteItem,
   getAdminProducts,
