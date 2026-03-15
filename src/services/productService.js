@@ -33,14 +33,17 @@ const createNew = async (reqBody, reqFiles) => {
   } catch (error) { throw error }
 }
 
-const getProducts = async (page, itemsPerPage) => {
+const getProducts = async (page, itemsPerPage, search = null, category = null, sort = null) => {
   try {
     if (!page) page = DEFAULT_PAGE
     if (!itemsPerPage) itemsPerPage = DEFAULT_ITEM_PER_PAGE
 
     const results = await productModel.getProducts(
       parseInt(page, 10),
-      parseInt(itemsPerPage, 10)
+      parseInt(itemsPerPage, 10),
+      search,
+      category,
+      sort
     )
 
     return results
@@ -120,11 +123,18 @@ const forceDeleteItem = async (productId) => {
   return { message: 'Đã xóa vĩnh viễn sản phẩm thành công!' }
 }
 
+const getRelatedProducts = async (productId, categoryId, limit = 4) => {
+  try {
+    return await productModel.getRelatedProducts(productId, categoryId, limit)
+  } catch (error) { throw new Error(error) }
+}
+
 export const productService = {
   createNew,
   getProducts,
   getAccessories,
   getDetails,
+  getRelatedProducts,
   update,
   deleteItem,
   getAdminProducts,

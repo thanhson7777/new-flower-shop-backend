@@ -73,20 +73,44 @@ const getCrossSellAccessories = async (limit = 5) => {
   } catch (error) { throw new Error(error) }
 }
 
-const getProducts = async (page, itemsPerPage) => {
+const getProducts = async (page, itemsPerPage, search = null, category = null, sort = null) => {
   try {
+    // Build match condition with optional search and category
+    const matchCondition = {
+      _destroy: false,
+      status: STATUS_PRODUCT.ACTIVE
+    }
+
+    // Add search filter if provided (case-insensitive search on product name)
+    if (search && search.trim()) {
+      matchCondition.name = { $regex: search.trim(), $options: 'i' }
+    }
+
+    // Add category filter if provided
+    if (category && category.trim()) {
+      matchCondition.categoryId = new ObjectId(String(category.trim()))
+    }
+
+    // Build sort option
+    let sortOption = { createdAt: -1 } // default: newest
+    if (sort === 'price-asc') {
+      sortOption = { referencePrice: 1 }
+    } else if (sort === 'price-desc') {
+      sortOption = { referencePrice: -1 }
+    } else if (sort === 'bestseller') {
+      sortOption = { ratingQuantity: -1 }
+    } else if (sort === 'rating') {
+      sortOption = { ratingAverage: -1 }
+    }
+    // 'newest' is default
+
     const query = await GET_DB().collection(PRODUCT_COLLECTION_NAME).aggregate(
       [
-        {
-          $match: {
-            _destroy: false,
-            status: STATUS_PRODUCT.ACTIVE
-          }
-        },
+        { $match: matchCondition },
         {
           $facet: {
             'queryProducts': [
-              { $sort: { createdAt: -1 } },
+              { $sort: sortOption },
               { $skip: pagingSkipValue(page, itemsPerPage) },
               { $limit: itemsPerPage }
             ],
@@ -240,6 +264,24 @@ const countTotalProducts = async () => {
   } catch (error) { throw error }
 }
 
+const getRelatedProducts = async (productId, categoryId, limit = 4) => {
+  try {
+    return await GET_DB().collection(PRODUCT_COLLECTION_NAME)
+      .aggregate([
+        {
+          $match: {
+            _id: { $ne: new ObjectId(String(productId)) },
+            categoryId: new ObjectId(String(categoryId)),
+            _destroy: false,
+            status: STATUS_PRODUCT.ACTIVE
+          }
+        },
+        { $sample: { size: limit } }
+      ])
+      .toArray()
+  } catch (error) { throw new Error(error) }
+}
+
 export const productModel = {
   PRODUCT_COLLECTION_NAME,
   PRODUCT_COLLECTION_SCHEMA,
@@ -247,6 +289,7 @@ export const productModel = {
   findOneById,
   getCrossSellAccessories,
   getProducts,
+  getRelatedProducts,
   update,
   deleteByOneId,
   deleteManyByCategoryId,
