@@ -17,6 +17,12 @@ Router.route('/me').get(
   orderController.getMyOrders
 )
 
+Router.route('/me/:id').get(
+  authMiddleware.isAuthorized,
+  orderValidation.checkOrderId,
+  orderController.getMyOrderById
+)
+
 Router.route('/admin').get(
   authMiddleware.isAuthorized,
   authMiddleware.isAuthorizedAdmin,

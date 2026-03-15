@@ -81,10 +81,26 @@ const getMyOrders = async (req, res, next) => {
   }
 }
 
+const getMyOrderById = async (req, res, next) => {
+  try {
+    const orderId = req.params.id
+    const userId = req.jwtDecoded._id
+    const result = await orderService.getMyOrderById(orderId, userId)
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: 'Lấy chi tiết đơn hàng thành công!',
+      data: result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const orderController = {
   createNew,
   getAdminOrders,
   updateOrderStatus,
   cancelOrder,
-  getMyOrders
+  getMyOrders,
+  getMyOrderById
 }

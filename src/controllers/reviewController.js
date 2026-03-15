@@ -15,6 +15,21 @@ const createNew = async (req, res, next) => {
   }
 }
 
+// Lấy reviews theo orderId cho user
+const getReviewsByOrderId = async (req, res, next) => {
+  try {
+    const orderId = req.params.orderId
+    const reviews = await reviewService.getReviewsByOrderId(orderId)
+    res.status(StatusCodes.OK).json({
+      status: 'success',
+      message: 'Lấy đánh giá theo đơn hàng thành công',
+      data: reviews
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 // Admin functions
 const getReviews = async (req, res, next) => {
   try {
@@ -87,6 +102,7 @@ const getPublicReviews = async (req, res, next) => {
 
 export const reviewController = {
   createNew,
+  getReviewsByOrderId,
   // Admin functions
   getReviews,
   getDetails,

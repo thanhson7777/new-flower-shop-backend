@@ -19,6 +19,7 @@ const ORDER_COLLECTION_SCHEMA = Joi.object({
     phone: Joi.string().required().pattern(PHONE_RULE),
     province: Joi.string().required().trim(),
     district: Joi.string().required().trim(),
+    ward: Joi.string().allow(null, '').optional(),
     address: Joi.string().required().min(5).max(255)
   }).required(),
 
@@ -218,11 +219,18 @@ const getRevenueOverTime = async (targetDate) => {
       },
       {
         $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: { $toDate: '$createdAt' } } },
-          dailyRevenue: { $sum: '$finalPrice' }
+          _id: { $dateToString: { format: '%Y-%m', date: { $toDate: '$createdAt' } } },
+          totalRevenue: { $sum: '$finalPrice' }
         }
       },
-      { $sort: { _id: 1 } }
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          _id: 0,
+          date: '$_id',
+          totalRevenue: 1
+        }
+      }
     ]).toArray()
   } catch (error) { throw error }
 }
@@ -234,6 +242,7 @@ const getRecentOrders = async (limitCount = 5) => {
       .sort({ createdAt: -1 })
       .limit(limitCount)
       .project({
+        orderCode: 1,
         'buyerInfo.fullname': 1,
         'receiverAddress.phone': 1,
         finalPrice: 1,

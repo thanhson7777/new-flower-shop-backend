@@ -17,6 +17,13 @@ Router.route('/')
     reviewController.createNew
   )
 
+// Lấy reviews theo orderId (user cần đăng nhập)
+Router.route('/order/:orderId')
+  .get(
+    authMiddleware.isAuthorized,
+    reviewController.getReviewsByOrderId
+  )
+
 // Admin routes
 Router.route('/admin')
   .get(

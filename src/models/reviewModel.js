@@ -160,6 +160,51 @@ const getAllReviews = async () => {
   } catch (error) { throw error }
 }
 
+// Lấy reviews theo orderId
+const getReviewsByOrderId = async (orderId) => {
+  try {
+    const reviews = await GET_DB().collection(REVIEW_COLLECTION_NAME).aggregate([
+      {
+        $match: {
+          orderId: new ObjectId(String(orderId))
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'productId',
+          foreignField: '_id',
+          as: 'product'
+        }
+      },
+      { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          rating: 1,
+          content: 1,
+          images: 1,
+          createdAt: 1,
+          'user.displayName': 1,
+          'user.avatar': 1,
+          'product._id': 1,
+          'product.name': 1,
+          'product.thumbnail': 1
+        }
+      }
+    ]).toArray()
+    return reviews
+  } catch (error) { throw error }
+}
+
 const findOneById = async (id) => {
   try {
     return await GET_DB().collection(REVIEW_COLLECTION_NAME).findOne({ _id: new ObjectId(String(id)) })
@@ -237,6 +282,7 @@ export const reviewModel = {
   getProductReviews,
   // Admin functions
   getAllReviews,
+  getReviewsByOrderId,
   findOneById,
   updateReview,
   deleteReview,

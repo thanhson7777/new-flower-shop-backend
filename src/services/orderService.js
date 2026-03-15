@@ -71,9 +71,9 @@ const createNew = async ({ userId, reqBody }) => {
   )
 
   // Debug: log giá trị để debug
-  console.log('Backend calculated shippingFee:', shippingFee)
-  console.log('Frontend sent shippingFee:', reqBody.shippingFee)
-  console.log('totalProductPrice from frontend:', reqBody.totalProductPrice)
+  // console.log('Backend calculated shippingFee:', shippingFee)
+  // console.log('Frontend sent shippingFee:', reqBody.shippingFee)
+  // console.log('totalProductPrice from frontend:', reqBody.totalProductPrice)
 
   if (shippingFee !== reqBody.shippingFee) {
     throw new ApiError(StatusCodes.BAD_REQUEST, `Phí vận chuyển không hợp lệ do có sự thay đổi. Vui lòng tải lại trang! (Tính: ${shippingFee}, Gửi: ${reqBody.shippingFee}, Tổng tiền: ${reqBody.totalProductPrice})`)
@@ -138,8 +138,8 @@ const createNew = async ({ userId, reqBody }) => {
     const requestId = orderId
     const amount = newOrderData.finalPrice
     const orderInfo = `Thanh toan don hang ${createdOrder.insertedId.toString()}`
-    const redirectUrl = 'http://localhost:8017/v1/payments/momo_callback'
-    const ipnUrl = 'http://localhost:8017/v1/payments/momo_callback'
+    const redirectUrl = `${process.env.LOCAL_DEV_APP_HOST}:${process.env.LOCAL_DEV_APP_PORT}/v1/payments/momo_return`
+    const ipnUrl = `${process.env.LOCAL_DEV_APP_HOST}:${process.env.LOCAL_DEV_APP_PORT}/v1/payments/momo_callback`
     const requestType = 'payWithMethod'
     const extraData = ''
 
@@ -251,11 +251,23 @@ const getMyOrders = async (userId) => {
   return orders
 }
 
+const getMyOrderById = async (orderId, userId) => {
+  const order = await orderModel.findOneById(orderId)
+  if (!order) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Đơn hàng không tồn tại!')
+  }
+  if (order.userId.toString() !== userId.toString()) {
+    throw new ApiError(StatusCodes.FORBIDDEN, 'Bạn không có quyền xem đơn hàng này!')
+  }
+  return order
+}
+
 
 export const orderService = {
   createNew,
   getAdminOrders,
   updateOrderStatus,
   cancelOrder,
-  getMyOrders
+  getMyOrders,
+  getMyOrderById
 }

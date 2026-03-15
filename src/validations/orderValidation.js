@@ -16,6 +16,7 @@ const createNew = async (req, res, next) => {
       phone: Joi.string().required().pattern(PHONE_RULE),
       province: Joi.string().required().trim(),
       district: Joi.string().required().trim(),
+      ward: Joi.string().allow('', null).optional(),
       address: Joi.string().required().min(5)
     }).required(),
 

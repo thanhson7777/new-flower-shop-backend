@@ -3,6 +3,20 @@
 import { StatusCodes } from 'http-status-codes'
 import { paymentService } from '~/services/paymentService'
 
+const vnpayReturn = async (req, res, next) => {
+  try {
+    const result = await paymentService.verifyVnpayIpn(req.query)
+    if (result.RspCode === '00') {
+      res.redirect(`${process.env.WEBISTE_DOMAIN_DEVELOPMENT}/order-success?payment=success`)
+    } else {
+      res.redirect(`${process.env.WEBISTE_DOMAIN_DEVELOPMENT}/order-success?payment=failed`)
+    }
+  } catch (error) {
+    console.error('Lỗi Return VNPAY:', error)
+    res.redirect(`${process.env.WEBISTE_DOMAIN_DEVELOPMENT}/order-success?payment=error`)
+  }
+}
+
 const vnpayIpn = async (req, res, next) => {
   try {
     const result = await paymentService.verifyVnpayIpn(req.query)
@@ -27,7 +41,27 @@ const momoCallback = async (req, res, next) => {
   }
 }
 
+const momoReturn = async (req, res, next) => {
+  try {
+    const momoParams = Object.keys(req.body).length > 0 ? req.body : req.query
+
+    const { resultCode } = momoParams
+
+    if (String(resultCode) === '0') {
+      await paymentService.verifyMomoCallback(momoParams)
+      res.redirect(`${process.env.WEBISTE_DOMAIN_DEVELOPMENT}/order-success?payment=success`)
+    } else {
+      res.redirect(`${process.env.WEBISTE_DOMAIN_DEVELOPMENT}/order-success?payment=failed`)
+    }
+  } catch (error) {
+    console.error('Lỗi Return MOMO:', error)
+    res.redirect(`${process.env.WEBISTE_DOMAIN_DEVELOPMENT}/order-success?payment=error`)
+  }
+}
+
 export const paymentController = {
+  vnpayReturn,
   vnpayIpn,
-  momoCallback
+  momoCallback,
+  momoReturn
 }

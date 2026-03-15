@@ -42,6 +42,14 @@ const createNew = async (userId, data) => {
   return { ...reviewData, _id: result.insertedId }
 }
 
+// Lấy reviews theo orderId
+const getReviewsByOrderId = async (orderId) => {
+  try {
+    const reviews = await reviewModel.getReviewsByOrderId(orderId)
+    return reviews
+  } catch (error) { throw error }
+}
+
 // Admin functions
 const getAllReviews = async () => {
   try {
@@ -114,6 +122,7 @@ const getPublicReviews = async (limit = 6) => {
 
 export const reviewService = {
   createNew,
+  getReviewsByOrderId,
   // Admin functions
   getAllReviews,
   getReviewDetails,

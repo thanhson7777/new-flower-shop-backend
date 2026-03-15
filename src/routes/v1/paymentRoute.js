@@ -3,8 +3,10 @@ import { paymentController } from '~/controllers/paymentController'
 
 const Router = express.Router()
 
+Router.get('/vnpay_return', paymentController.vnpayReturn)
 Router.get('/vnpay_ipn', paymentController.vnpayIpn)
 
+Router.get('/momo_return', paymentController.momoReturn)
 Router.get('/momo_callback', paymentController.momoCallback)
 Router.post('/momo_callback', paymentController.momoCallback)
 
