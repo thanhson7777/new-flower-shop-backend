@@ -49,7 +49,11 @@ export const STATUS_CONTACT = {
 }
 
 export const WHITELIST_DOMAINS = [
-  'http://localhost:5173'
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:5174',
+  'https://your-frontend.vercel.app',
+  // Thêm các domain khác khi deploy frontend
 ]
 
 export const WEBSITE_DOMAIN = (env.BUILD_MODE === 'production') ? env.WEBISTE_DOMAIN_PRODUCTION : env.WEBISTE_DOMAIN_DEVELOPMENT
