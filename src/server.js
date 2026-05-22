@@ -11,6 +11,12 @@ import cookieParser from 'cookie-parser'
 
 const START_SERVER = () => {
   const app = express()
+
+  // Health check endpoint for Render
+  app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() })
+  })
+
   app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store')
     next()
@@ -26,8 +32,12 @@ const START_SERVER = () => {
 
   app.use(errorHandlingMiddleware)
 
-  app.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
-    console.log(`Xin chào ${env.AUTHOR}, Server đang chạy thành công trên cổng: http://${env.LOCAL_DEV_APP_HOST}:${env.LOCAL_DEV_APP_PORT}/ `)
+  // Support Render PORT (defaults to 8017 for local dev)
+  const PORT = process.env.PORT || env.LOCAL_DEV_APP_PORT
+  const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : env.LOCAL_DEV_APP_HOST
+
+  app.listen(PORT, HOST, () => {
+    console.log(`Xin chào ${env.AUTHOR}, Server đang chạy thành công trên cổng: http://${HOST}:${PORT}/ `)
   })
 
   // clean up trước khi dừng server

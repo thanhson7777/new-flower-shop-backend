@@ -1,0 +1,67 @@
+# Render Blueprint Configuration
+# Documentation: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: flower-shop-api
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm run production
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BUILD_MODE
+        value: production
+      # Database - set on Render Dashboard
+      - key: MONGODB_URI
+        sync: false
+      - key: DATABASE_NAME
+        value: flower-shop
+      # JWT Secrets - set on Render Dashboard
+      - key: ACCESS_TOKEN_SECRET_SIGNATURE
+        sync: false
+      - key: ACCESS_TOKEN_LIFE
+        value: 1h
+      - key: REFRESH_TOKEN_SECRET_SIGNATURE
+        sync: false
+      - key: REFRESH_TOKEN_LIFE
+        value: 14 days
+      # Cloudinary - set on Render Dashboard
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      # Brevo - set on Render Dashboard
+      - key: BREVO_API_KEY
+        sync: false
+      - key: ADMIN_EMAIL_ADDRESS
+        value: thanhson11052003@gmail.com
+      - key: ADMIN_EMAIL_NAME
+        value: Quach Thanh Vu
+      # VNPay - set on Render Dashboard
+      - key: VNP_TMN_CODE
+        sync: false
+      - key: VNP_HASH_SECRET
+        sync: false
+      - key: VNP_URL
+        value: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+      - key: VNP_RETURN_URL
+        # Update this after deploying frontend to Vercel
+        # Example: https://your-frontend.vercel.app/v1/payments/vnpay_return
+        sync: false
+      # MoMo - set on Render Dashboard
+      - key: MOMO_PARTNER_CODE
+        value: MOMO
+      - key: MOMO_ACCESS_KEY
+        sync: false
+      - key: MOMO_SECRET_KEY
+        sync: false
+      # Author
+      - key: AUTHOR
+        value: Thanh Vu
